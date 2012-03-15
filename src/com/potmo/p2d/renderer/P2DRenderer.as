@@ -1,7 +1,9 @@
 package com.potmo.p2d.renderer
 {
 	import com.potmo.p2d.atlas.P2DTextureAtlas;
+	import com.potmo.p2d.atlas.animation.P2DSpriteAtlasSequence;
 
+	import flash.display.BlendMode;
 	import flash.display3D.Context3D;
 	import flash.display3D.Context3DProgramType;
 	import flash.display3D.Context3DVertexBufferFormat;
@@ -18,9 +20,12 @@ package com.potmo.p2d.renderer
 		private var _antialias:uint;
 		private var _context:Context3D;
 		private var _program:P2DRenderProgram;
-		private var _atlas:P2DTextureAtlas;
+		private var _atlases:Vector.<P2DTextureAtlas>;
+		private var _atlasCount:int;
+
 		private var _matrix:Matrix;
 		private var _matrixVector:Vector.<Number>;
+		private var _transformVector:Vector.<Number>;
 
 		private var _backBufferWidth:Number;
 		private var _backBufferHeight:Number;
@@ -28,12 +33,13 @@ package com.potmo.p2d.renderer
 		private var _backBufferHeightInv:Number;
 
 
-		public function P2DRenderer( viewPort:Rectangle, antialias:uint, atlas:P2DTextureAtlas )
+		public function P2DRenderer( viewPort:Rectangle, antialias:uint, atlases:Vector.<P2DTextureAtlas> )
 		{
 			_matrix = new Matrix();
 			_viewPort = viewPort;
+			_atlases = atlases;
 			_antialias = antialias;
-			_atlas = atlas;
+			_atlasCount = _atlases.length;
 			_program = new P2DRenderProgram();
 			_matrixVector = new Vector.<Number>( 12, true );
 			_backBufferWidth = _viewPort.width;
@@ -49,6 +55,8 @@ package com.potmo.p2d.renderer
 			_matrixVector[ 7 ] = 1.0;
 			_matrixVector[ 11 ] = 1.0;
 
+			_transformVector = new Vector.<Number>();
+
 		}
 
 
@@ -59,7 +67,10 @@ package com.potmo.p2d.renderer
 
 			_program.createProgram( context );
 
-			_atlas.handleContextCreated( context );
+			for ( var i:int = 0; i < _atlasCount; i++ )
+			{
+				_atlases[ i ].handleContextCreated( context );
+			}
 
 		}
 
@@ -73,18 +84,27 @@ package com.potmo.p2d.renderer
 		public function prepareRender():void
 		{
 			_program.setProgram( _context );
-			_context.setTextureAt( 0, _atlas.getTexure() );
 
-			var vertexBuffer:VertexBuffer3D = _atlas.getVertexBuffer();
-			_context.setVertexBufferAt( 0, vertexBuffer, 0, Context3DVertexBufferFormat.FLOAT_2 );
-			_context.setVertexBufferAt( 1, vertexBuffer, 2, Context3DVertexBufferFormat.FLOAT_2 );
+			var atlas:P2DTextureAtlas;
+
+			var vertexBuffer:VertexBuffer3D;
+
+			for ( var i:int = 0; i < _atlasCount; i++ )
+			{
+				atlas = _atlases[ i ];
+				_context.setTextureAt( i, atlas.getTexure() );
+
+				vertexBuffer = atlas.getVertexBuffer();
+				_context.setVertexBufferAt( 0, vertexBuffer, 0, Context3DVertexBufferFormat.FLOAT_2 );
+				_context.setVertexBufferAt( 1, vertexBuffer, 2, Context3DVertexBufferFormat.FLOAT_2 );
+			}
 
 		}
 
 
-		public function draw( frame:uint, x:Number, y:Number, rotation:Number, scaleX:Number, scaleY:Number ):void
+		public function draw( atlas:int, frame:uint, x:Number, y:Number, rotation:Number, scaleX:Number, scaleY:Number ):void
 		{
-			_matrix.createBox( scaleX, scaleY, rotation, x - _backBufferWidth, _backBufferHeight - y );
+			_matrix.createBox( scaleX, scaleY, rotation, x * 2 - _backBufferWidth, _backBufferHeight - y * 2 );
 			_matrix.scale( _backBufferWidthInv, _backBufferHeightInv );
 			_matrixVector[ 0 ] = _matrix.a;
 			_matrixVector[ 1 ] = _matrix.c;
@@ -92,9 +112,17 @@ package com.potmo.p2d.renderer
 			_matrixVector[ 4 ] = _matrix.b;
 			_matrixVector[ 5 ] = _matrix.d;
 			_matrixVector[ 6 ] = _matrix.ty;
+
+			_transformVector[ 0 ] = 1.0;
+			_transformVector[ 1 ] = 1.0;
+			_transformVector[ 2 ] = 1.0;
+			_transformVector[ 3 ] = 1.0; // alpha here
+			_context.setProgramConstantsFromVector( Context3DProgramType.FRAGMENT, 0, _transformVector, 1 );
+
 			_context.setProgramConstantsFromVector( Context3DProgramType.VERTEX, 0, _matrixVector, 3 );
 
-			var indexBuffer:IndexBuffer3D = _atlas.getIndexBuffer();
+			//var indexBuffer:IndexBuffer3D = _atlases.getIndexBuffer();
+			var indexBuffer:IndexBuffer3D = _atlases[ atlas ].getIndexBuffer();
 			_context.drawTriangles( indexBuffer, frame * 6, 2 );
 		}
 
@@ -110,5 +138,12 @@ package com.potmo.p2d.renderer
 		{
 			_context.present();
 		}
+
+
+		public function handleContentLost():void
+		{
+			throw new Error( "Not handling content lost yet" );
+		}
+
 	}
 }

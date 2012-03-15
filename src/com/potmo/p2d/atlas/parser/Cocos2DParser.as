@@ -3,14 +3,14 @@ package com.potmo.p2d.atlas.parser
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
 
-	public class Cocos2DParser implements P2DAtlasParser
+	public class Cocos2DParser implements AtlasParser
 	{
 		public function Cocos2DParser()
 		{
 		}
 
 
-		public function parse( descriptor:XML, sizes:Vector.<Point>, offsets:Vector.<Point>, frames:Vector.<Rectangle> ):void
+		public function parse( descriptor:XML, sizes:Vector.<Point>, offsets:Vector.<Point>, frames:Vector.<Rectangle>, names:Vector.<String> ):void
 		{
 
 			// Not very generic, only tested with TexturePacker
@@ -33,6 +33,7 @@ package com.potmo.p2d.atlas.parser
 
 						for ( var l:uint = 0; l < frameKeys.length(); l++ )
 						{
+							names.push( frameKeys[ l ].toString() );
 							var propKeys:XMLList = frameDicts[ l ].key;
 							var propAll:XMLList = frameDicts[ l ].*;
 

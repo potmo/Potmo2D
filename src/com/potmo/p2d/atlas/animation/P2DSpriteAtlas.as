@@ -1,0 +1,94 @@
+package com.potmo.p2d.atlas.animation
+{
+
+	public class P2DSpriteAtlas
+	{
+
+		private var _sequences:Vector.<P2DSpriteAtlasSequence>;
+		private var _sequenceCount:uint;
+
+
+		public function P2DSpriteAtlas( atlas:int, names:Vector.<String> )
+		{
+
+			_sequences = new Vector.<P2DSpriteAtlasSequence>();
+			_sequenceCount = 0;
+
+			var length:int = names.length;
+
+			for ( var i:int = 0; i < length; i++ )
+			{
+				var name:String = names[ i ];
+
+				// a frame name should be formatted as
+				// spritename/00001_label.png
+
+				var spriteFrameSplit:int = name.indexOf( "/" );
+
+				if ( spriteFrameSplit == -1 )
+				{
+					throw new Error( "can not parse name: " + name + " it does not contain slash" );
+				}
+
+				var frameLabelSplit:int = name.indexOf( "_" );
+
+				if ( frameLabelSplit == -1 )
+				{
+					throw new Error( "can not parse name " + name + " it does not contain underscore" );
+				}
+
+				var frameLabelEnd:int = name.lastIndexOf( "." );
+
+				if ( frameLabelEnd == -1 )
+				{
+					frameLabelEnd = int.MAX_VALUE;
+				}
+
+				var sequenceName:String = name.substring( 0, spriteFrameSplit );
+				var sequenceFrame:int = parseInt( name.substring( spriteFrameSplit + 1, frameLabelSplit ) );
+				var label:String = name.substring( frameLabelSplit + 1, frameLabelEnd );
+
+				var sequence:P2DSpriteAtlasSequence = getSequenceByName( sequenceName );
+
+				if ( !sequence )
+				{
+					sequence = createSequence( atlas, sequenceName );
+				}
+
+				sequence.addFrame( sequenceFrame, i, label );
+
+			}
+
+		}
+
+
+		/**
+		 * @returns a entry or null
+		 */
+		public function getSequenceByName( name:String ):P2DSpriteAtlasSequence
+		{
+
+			for ( var i:int = 0; i < _sequenceCount; i++ )
+			{
+				var sequence:P2DSpriteAtlasSequence = _sequences[ i ];
+
+				if ( sequence.getName() == name )
+				{
+					return sequence;
+				}
+			}
+
+			return null;
+		}
+
+
+		private function createSequence( atlas:int, name:String ):P2DSpriteAtlasSequence
+		{
+			var sequence:P2DSpriteAtlasSequence = new P2DSpriteAtlasSequence( atlas, name );
+			_sequences.push( sequence );
+			_sequenceCount++;
+			return sequence;
+		}
+
+	}
+}

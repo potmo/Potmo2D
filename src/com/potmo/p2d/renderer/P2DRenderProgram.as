@@ -13,7 +13,11 @@ package com.potmo.p2d.renderer
 																		   "m33 vt0.xyz, vt0, vc0\n",
 																		   "mov op, vt0\n",
 																		   "mov v0, va1\n" ];
-		private static const FRAGMENT_SHADER:Vector.<String> = new <String>[ "tex oc, v0, fs0 <2d,linear,miplinear>\n" ];
+
+		private static const FRAGMENT_SHADER:Vector.<String> = new <String>[ "tex oc, v0, fs0 <2d,linear,mipnone>\n" ];
+
+		private static const FRAGMENT_SHADER_ALPHA:Vector.<String> = new <String>[ "tex ft0, v0, fs0 <2d,linear,mipnone>\n",
+																				   "mul oc, ft0, fc0\n" ];
 
 		private var _program:Program3D;
 
@@ -38,7 +42,7 @@ package com.potmo.p2d.renderer
 
 			// Assemble fragment shader from its code
 			var fragmentAssembler:AGALMiniAssembler = new AGALMiniAssembler();
-			fragmentAssembler.assemble( Context3DProgramType.FRAGMENT, FRAGMENT_SHADER.join( "" ) );
+			fragmentAssembler.assemble( Context3DProgramType.FRAGMENT, FRAGMENT_SHADER_ALPHA.join( "" ) );
 
 			// Upload vertex/framgment shader to our program  
 			program.upload( vertexAssembler.agalcode, fragmentAssembler.agalcode );

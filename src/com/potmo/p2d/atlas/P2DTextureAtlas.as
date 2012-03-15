@@ -1,6 +1,8 @@
 package com.potmo.p2d.atlas
 {
-	import com.potmo.p2d.atlas.parser.P2DAtlasParser;
+	import com.potmo.p2d.atlas.animation.P2DSpriteAtlas;
+	import com.potmo.p2d.atlas.animation.P2DSpriteAtlasSequence;
+	import com.potmo.p2d.atlas.parser.AtlasParser;
 
 	import flash.display.BitmapData;
 	import flash.display3D.Context3D;
@@ -21,24 +23,39 @@ package com.potmo.p2d.atlas
 		private var _indexBuffer:IndexBuffer3D;
 		private var _vertexBuffer:VertexBuffer3D;
 		private var _textureBitmap:BitmapData;
+		private var _names:Vector.<String>;
 
 		private var _texture:Texture;
 
+		private var _spriteAtlas:P2DSpriteAtlas;
+		private var _id:int;
 
-		public function P2DTextureAtlas( xmlDescriptor:XML, textureBitmap:BitmapData, parser:P2DAtlasParser )
+
+		public function P2DTextureAtlas( id:int, xmlDescriptor:XML, textureBitmap:BitmapData, parser:AtlasParser )
 		{
 			_sizes = new Vector.<Point>();
 			_offsets = new Vector.<Point>();
 			_frames = new Vector.<Rectangle>();
-			parser.parse( xmlDescriptor, _sizes, _offsets, _frames );
-			_textureBitmap = textureBitmap;
+			_names = new Vector.<String>();
+			_id = id;
 
+			parser.parse( xmlDescriptor, _sizes, _offsets, _frames, _names );
+
+			_spriteAtlas = new P2DSpriteAtlas( _id, _names );
+
+			_textureBitmap = textureBitmap;
+		}
+
+
+		public function getSequenceByName( name:String ):P2DSpriteAtlasSequence
+		{
+			return _spriteAtlas.getSequenceByName( name );
 		}
 
 
 		public function handleContextCreated( context:Context3D ):void
 		{
-			createVertices( context, "lefttop", _sizes, _offsets, _frames, _textureBitmap.width, _textureBitmap.height );
+			createVertices( context, "center", _sizes, _offsets, _frames, _textureBitmap.width, _textureBitmap.height );
 			createTexture( context, _textureBitmap );
 		}
 
@@ -47,7 +64,7 @@ package com.potmo.p2d.atlas
 		{
 			_texture = context.createTexture( textureBitmap.width, textureBitmap.height, Context3DTextureFormat.BGRA, false );
 			//_texture.uploadFromBitmapData( textureBitmap, 0 );
-			uploadBitmapData( _texture, textureBitmap, true );
+			uploadBitmapData( _texture, textureBitmap, false );
 		}
 
 
