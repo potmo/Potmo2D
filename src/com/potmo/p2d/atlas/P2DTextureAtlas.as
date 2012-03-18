@@ -2,6 +2,7 @@ package com.potmo.p2d.atlas
 {
 	import com.potmo.p2d.atlas.animation.P2DSpriteAtlas;
 	import com.potmo.p2d.atlas.animation.P2DSpriteAtlasSequence;
+	import com.potmo.p2d.atlas.animation.SpriteAtlasSequence;
 	import com.potmo.p2d.atlas.parser.AtlasParser;
 
 	import flash.display.BitmapData;
@@ -27,7 +28,6 @@ package com.potmo.p2d.atlas
 
 		private var _texture:Texture;
 
-		private var _spriteAtlas:P2DSpriteAtlas;
 		private var _id:int;
 
 
@@ -41,15 +41,7 @@ package com.potmo.p2d.atlas
 
 			parser.parse( xmlDescriptor, _sizes, _offsets, _frames, _names );
 
-			_spriteAtlas = new P2DSpriteAtlas( _id, _names );
-
 			_textureBitmap = textureBitmap;
-		}
-
-
-		public function getSequenceByName( name:String ):P2DSpriteAtlasSequence
-		{
-			return _spriteAtlas.getSequenceByName( name );
 		}
 
 
@@ -225,6 +217,26 @@ package com.potmo.p2d.atlas
 		public function getTexure():Texture
 		{
 			return _texture;
+		}
+
+
+		public function getFrameNames():Vector.<String>
+		{
+			// clone
+			return _names.concat();
+		}
+
+
+		public function getFrameSizes():Vector.<Point>
+		{
+			// clone
+			return _sizes.concat();
+		}
+
+
+		public function getId():uint
+		{
+			return _id;
 		}
 
 

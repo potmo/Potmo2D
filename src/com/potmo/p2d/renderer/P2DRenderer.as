@@ -95,6 +95,7 @@ package com.potmo.p2d.renderer
 				_context.setTextureAt( i, atlas.getTexure() );
 
 				vertexBuffer = atlas.getVertexBuffer();
+				//TODO: need some other vertex buffer here I think for seconds texture
 				_context.setVertexBufferAt( 0, vertexBuffer, 0, Context3DVertexBufferFormat.FLOAT_2 );
 				_context.setVertexBufferAt( 1, vertexBuffer, 2, Context3DVertexBufferFormat.FLOAT_2 );
 			}
@@ -102,7 +103,7 @@ package com.potmo.p2d.renderer
 		}
 
 
-		public function draw( atlas:int, frame:uint, x:Number, y:Number, rotation:Number, scaleX:Number, scaleY:Number ):void
+		public function draw( atlasId:int, frame:uint, x:Number, y:Number, rotation:Number, scaleX:Number, scaleY:Number ):void
 		{
 			_matrix.createBox( scaleX, scaleY, rotation, x * 2 - _backBufferWidth, _backBufferHeight - y * 2 );
 			_matrix.scale( _backBufferWidthInv, _backBufferHeightInv );
@@ -122,7 +123,7 @@ package com.potmo.p2d.renderer
 			_context.setProgramConstantsFromVector( Context3DProgramType.VERTEX, 0, _matrixVector, 3 );
 
 			//var indexBuffer:IndexBuffer3D = _atlases.getIndexBuffer();
-			var indexBuffer:IndexBuffer3D = _atlases[ atlas ].getIndexBuffer();
+			var indexBuffer:IndexBuffer3D = _atlases[ atlasId ].getIndexBuffer();
 			_context.drawTriangles( indexBuffer, frame * 6, 2 );
 		}
 

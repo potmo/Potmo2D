@@ -17,7 +17,7 @@ package com.potmo.p2d.renderer
 		 * @param scaleY scale to render frame
 		 *
 		 */
-		function draw( atlas:int, frame:uint, x:Number, y:Number, rotation:Number, scaleX:Number, scaleY:Number ):void;
+		function draw( atlasId:int, frame:uint, x:Number, y:Number, rotation:Number, scaleX:Number, scaleY:Number ):void;
 
 	}
 }
