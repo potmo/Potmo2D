@@ -23,40 +23,81 @@ package com.potmo.p2d.atlas
 		private var _frameCount:uint;
 		private var _indexBuffer:IndexBuffer3D;
 		private var _vertexBuffer:VertexBuffer3D;
-		private var _textureBitmap:BitmapData;
+		private var _textureBitmaps:Vector.<BitmapData>;
 		private var _names:Vector.<String>;
 
-		private var _texture:Texture;
+		// the textures
+		private var _textures:Vector.<Texture>;
+		private var _textureCount:int;
+		// the frame offsets. That is the second element will be equal to the nuber of frames of the first texture
+		private var _textureFrameOffsets:Vector.<uint>;
 
-		private var _id:int;
 
-
-		public function P2DTextureAtlas( id:int, xmlDescriptor:XML, textureBitmap:BitmapData, parser:AtlasParser )
+		public function P2DTextureAtlas()
 		{
 			_sizes = new Vector.<Point>();
 			_offsets = new Vector.<Point>();
 			_frames = new Vector.<Rectangle>();
 			_names = new Vector.<String>();
-			_id = id;
+			_textureFrameOffsets = new Vector.<uint>();
+			_textureBitmaps = new Vector.<BitmapData>();
+			_textureCount = 0;
+		}
 
-			parser.parse( xmlDescriptor, _sizes, _offsets, _frames, _names );
 
-			_textureBitmap = textureBitmap;
+		public function addTexture( xmlDescriptor:XML, textureBitmap:BitmapData, parser:AtlasParser ):void
+		{
+			// Push the number of frames that we had before adding a new texture
+			_textureFrameOffsets.push( _frames.length - 1 );
+
+			// parse the xml and get the vectors populated
+			var sizes:Vector.<Point> = new Vector.<Point>();
+			var offsets:Vector.<Point> = new Vector.<Point>();
+			var frames:Vector.<Rectangle> = new Vector.<Rectangle>();
+			var names:Vector.<String> = new Vector.<String>();
+			parser.parse( xmlDescriptor, sizes, offsets, frames, names );
+
+			//add the populated vectors to our full list
+			_sizes = _sizes.concat( sizes );
+			_offsets = _offsets.concat( offsets );
+			_frames = _frames.concat( frames );
+			_names = _names.concat( names );
+
+			_textureBitmaps.push( textureBitmap );
+			_textureCount++;
 		}
 
 
 		public function handleContextCreated( context:Context3D ):void
 		{
-			createVertices( context, "center", _sizes, _offsets, _frames, _textureBitmap.width, _textureBitmap.height );
-			createTexture( context, _textureBitmap );
+			createVertices( context, "center", _sizes, _offsets, _frames, _textureBitmaps, _textureFrameOffsets );
+
+			uploadTextures( context );
+
 		}
 
 
-		private function createTexture( context:Context3D, textureBitmap:BitmapData ):void
+		private function uploadTextures( context:Context3D ):void
 		{
-			_texture = context.createTexture( textureBitmap.width, textureBitmap.height, Context3DTextureFormat.BGRA, false );
+			_textures = new Vector.<Texture>();
+			var textureCount:int = _textureBitmaps.length;
+
+			for ( var i:int = 0; i < textureCount; i++ )
+			{
+				var texture:Texture = uploadTexture( context, _textureBitmaps[ i ] );
+				_textures.push( texture );
+			}
+			_textureCount = _textures.length;
+
+		}
+
+
+		private function uploadTexture( context:Context3D, textureBitmap:BitmapData ):Texture
+		{
+			var texture:Texture = context.createTexture( textureBitmap.width, textureBitmap.height, Context3DTextureFormat.BGRA, false );
 			//_texture.uploadFromBitmapData( textureBitmap, 0 );
-			uploadBitmapData( _texture, textureBitmap, false );
+			uploadBitmapData( texture, textureBitmap, false );
+			return texture;
 		}
 
 
@@ -90,16 +131,42 @@ package com.potmo.p2d.atlas
 		}
 
 
-		private function createVertices( context:Context3D, registrationPoint:String, sizes:Vector.<Point>, offsets:Vector.<Point>, frames:Vector.<Rectangle>, textureWidth:uint, textureHeight:uint ):void
+		private function createVertices( context:Context3D, registrationPoint:String, sizes:Vector.<Point>, offsets:Vector.<Point>, frames:Vector.<Rectangle>, textureBitmaps:Vector.<BitmapData>, textureFrameOffsets:Vector.<uint> ):void
 		{
+
+			// get the frame offset and the next frame offset
+			var currentTexture:int = -1;
+			var currentTextureLastFrame:uint = 0;
+			var currentTextureWidth:uint;
+			var currentTextureHeight:uint;
+
 			var v:uint = 0;
 			var i:uint = 0;
+			var numFrames:uint = frames.length;
 
-			var vd:Vector.<Number> = new Vector.<Number>( frames.length * 16 );
-			var id:Vector.<uint> = new Vector.<uint>( frames.length * 6 );
+			var vd:Vector.<Number> = new Vector.<Number>( numFrames * 24, true );
+			var id:Vector.<uint> = new Vector.<uint>( numFrames * 6, true );
 
-			for ( var c:uint = 0; c < frames.length; c++ )
+			for ( var c:uint = 0; c < numFrames; c++ )
 			{
+
+				// swap to the next texture
+				if ( c == currentTextureLastFrame )
+				{
+					currentTexture++;
+
+					if ( currentTexture < textureFrameOffsets.length - 1 )
+					{
+						currentTextureLastFrame = textureFrameOffsets[ currentTexture + 1 ];
+					}
+					else
+					{
+						currentTextureLastFrame = numFrames;
+					}
+
+					currentTextureWidth = textureBitmaps[ currentTexture ].width;
+					currentTextureHeight = textureBitmaps[ currentTexture ].height;
+				}
 
 				var x:Number = frames[ c ].x;
 				var y:Number = frames[ c ].y;
@@ -174,28 +241,43 @@ package com.potmo.p2d.atlas
 					}
 				}
 
-				var u0:Number = ( x ) / textureWidth;
-				var v0:Number = ( y ) / textureHeight;
-				var u1:Number = ( x + w ) / textureWidth;
-				var v1:Number = ( y + h ) / textureHeight;
+				var u0:Number = ( x ) / currentTextureWidth;
+				var v0:Number = ( y ) / currentTextureHeight;
+				var u1:Number = ( x + w ) / currentTextureWidth;
+				var v1:Number = ( y + h ) / currentTextureHeight;
 
+				// frame sizes and uv (2 * FLOAT_2)
 				vd[ v++ ] = x0;
 				vd[ v++ ] = y0;
 				vd[ v++ ] = u0;
 				vd[ v++ ] = v0;
+				vd[ v++ ] = currentTexture == 0 ? 1 : 0; //x
+				vd[ v++ ] = currentTexture == 1 ? 1 : 0; //x
+
 				vd[ v++ ] = x1;
 				vd[ v++ ] = y0;
 				vd[ v++ ] = u1;
 				vd[ v++ ] = v0;
+				vd[ v++ ] = currentTexture == 0 ? 1 : 0; //y
+				vd[ v++ ] = currentTexture == 1 ? 1 : 0; //y
+
 				vd[ v++ ] = x1;
 				vd[ v++ ] = y1;
 				vd[ v++ ] = u1;
 				vd[ v++ ] = v1;
+				vd[ v++ ] = currentTexture == 0 ? 1 : 0; //z
+				vd[ v++ ] = currentTexture == 1 ? 1 : 0; //z
+
 				vd[ v++ ] = x0;
 				vd[ v++ ] = y1;
 				vd[ v++ ] = u0;
 				vd[ v++ ] = v1;
+				vd[ v++ ] = currentTexture == 0 ? 1 : 0; //w
+				vd[ v++ ] = currentTexture == 1 ? 1 : 0; //w
 
+				// texture mask (1 * FLOAT_2)
+
+				// indices (two triangles times 3 vertices)
 				id[ i++ ] = ( c * 4 + 0 );
 				id[ i++ ] = ( c * 4 + 1 );
 				id[ i++ ] = ( c * 4 + 3 );
@@ -208,15 +290,16 @@ package com.potmo.p2d.atlas
 			_frameCount = frames.length;
 			_indexBuffer = context.createIndexBuffer( id.length );
 			_indexBuffer.uploadFromVector( id, 0, id.length );
-			_vertexBuffer = context.createVertexBuffer( vd.length / 4, 4 );
-			_vertexBuffer.uploadFromVector( vd, 0, vd.length / 4 );
+
+			_vertexBuffer = context.createVertexBuffer( vd.length / 6, 6 ); // FLOAT_2 + FLOAT_2 + FLOAT_2 = 6 floats of 4 components each
+			_vertexBuffer.uploadFromVector( vd, 0, vd.length / 6 );
 
 		}
 
 
-		public function getTexure():Texture
+		public function getTexure( id:uint ):Texture
 		{
-			return _texture;
+			return _textures[ id ];
 		}
 
 
@@ -234,12 +317,6 @@ package com.potmo.p2d.atlas
 		}
 
 
-		public function getId():uint
-		{
-			return _id;
-		}
-
-
 		public function getVertexBuffer():VertexBuffer3D
 		{
 			return _vertexBuffer;
@@ -250,5 +327,12 @@ package com.potmo.p2d.atlas
 		{
 			return _indexBuffer;
 		}
+
+
+		public function getTextureCount():int
+		{
+			return _textureCount;
+		}
+
 	}
 }

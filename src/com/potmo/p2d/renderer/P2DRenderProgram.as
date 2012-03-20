@@ -9,19 +9,41 @@ package com.potmo.p2d.renderer
 	public class P2DRenderProgram
 	{
 
-		private static const VERTEX_SHADER:Vector.<String> = new <String>[ "mov vt0.xyzw, va0.xyww\n",
-																		   "m33 vt0.xyz, vt0, vc0\n",
-																		   "mov op, vt0\n",
-																		   "mov v0, va1\n" ];
+		private static const VERTEX_SHADER:Vector.<String> = new <String>[ "mov vt0.xyzw, va0.xyww\n", // copy postion (setVertexBufferAt(0...) )
+																		   "m33 vt0.xyz, vt0, vc0\n", // multiply with contant matrix (setProgramContantFromVector)
+																		   "mov op, vt0\n", // print out
+																		   "mov v0, va1\n" ]; // pass uv to fragment shader (setVertexBufferAt(1...)
 
-		private static const FRAGMENT_SHADER:Vector.<String> = new <String>[ "tex oc, v0, fs0 <2d,linear,mipnone>\n" ];
+		/**
+		 * Regular texture fragment shader that takes one texture only
+		 */
+		private static const FRAGMENT_SHADER:Vector.<String> = new <String>[ "tex oc, v0, fs0 <2d,linear,mipnone>\n" ]; // sample and output
 
-		private static const FRAGMENT_SHADER_ALPHA:Vector.<String> = new <String>[ "tex ft0, v0, fs0 <2d,linear,mipnone>\n",
-																				   "mul oc, ft0, fc0\n" ];
+		/**
+		 * Regular one texture fragment shader that applies alpha
+		 */
+		private static const FRAGMENT_SHADER_ALPHA:Vector.<String> = new <String>[ "tex ft0, v0, fs0 <2d,linear,mipnone>\n", //sample
+																				   "mul oc, ft0, fc0\n" ]; // multiply with alpha to output
+
+		/**
+		 * vertex shader to batch from multiple textures
+		 */
+		private static const VERTEX_SHADER_2_TEXTURE_BATCH:Vector.<String> = new <String>[ "mov vt0.xyzw, va0.xyww\n", // copy two first floats (setVertexBufferAt(0...)
+																						   "m33 vt0.xyz, vt0, vc0\n", // multiply matrix (setProgramContantFromVector)
+																						   "mov op, vt0\n", // print out
+																						   "mov v0, va1\n", // pass uv to fragment shader (setVertexBufferAt(1...)
+																						   "mov v1, va2\n" ]; // pass mask to fragment shader (setVertexBufferAt(1...)
+		/**
+		 * http://blog.flash-core.com/?p=493
+		 */
+
+		private static const FRAGMENT_SHADER_2_TEXTURE_BATCH:Vector.<String> = new <String>[ "tex ft0, v0, fs0 <2d,clamp,mipnone>\n", // sample texture 1
+																							 "mul ft0, ft0, v1.xxxx\n", // multiply with mask 1
+																							 "tex ft1, v0, fs1 <2d,clamp,mipnone>\n", // sample texture 2
+																							 "mul ft1, ft1, v1.yyyy\n", // multiply with mask 2
+																							 "add oc, ft0, ft1\n" ]; // add color 1 and color 2 and copy to output
 
 		private var _program:Program3D;
-
-		private var program:Program3D;
 
 
 		public function P2DRenderProgram()
@@ -30,29 +52,57 @@ package com.potmo.p2d.renderer
 		}
 
 
-		public function createProgram( context:Context3D ):void
+		private function getVertexShaderSource( numberOfTextures:uint ):String
+		{
+			switch ( numberOfTextures )
+			{
+				case 1:
+					return VERTEX_SHADER.join( "" );
+				case 2:
+					return VERTEX_SHADER_2_TEXTURE_BATCH.join( "" );
+				default:
+					throw new Error( "Texture batching vertex does not support " + numberOfTextures + " textures" );
+			}
+		}
+
+
+		private function getFragmentShaderSource( numberOfTextures:uint ):String
+		{
+			switch ( numberOfTextures )
+			{
+				case 1:
+					return FRAGMENT_SHADER_ALPHA.join( "" );
+				case 2:
+					return FRAGMENT_SHADER_2_TEXTURE_BATCH.join( "" );
+				default:
+					throw new Error( "Texture batching fragment does not support " + numberOfTextures + " textures" );
+			}
+		}
+
+
+		public function createProgram( context:Context3D, numberOfTextures:uint ):void
 		{
 
 			// Create program 3D instance for shader  
-			program = context.createProgram();
+			_program = context.createProgram();
 
 			// Assemble vertex shader from its code
 			var vertexAssembler:AGALMiniAssembler = new AGALMiniAssembler();
-			vertexAssembler.assemble( Context3DProgramType.VERTEX, VERTEX_SHADER.join( "" ) );
+			vertexAssembler.assemble( Context3DProgramType.VERTEX, getVertexShaderSource( numberOfTextures ) );
 
 			// Assemble fragment shader from its code
 			var fragmentAssembler:AGALMiniAssembler = new AGALMiniAssembler();
-			fragmentAssembler.assemble( Context3DProgramType.FRAGMENT, FRAGMENT_SHADER_ALPHA.join( "" ) );
+			fragmentAssembler.assemble( Context3DProgramType.FRAGMENT, getFragmentShaderSource( numberOfTextures ) );
 
 			// Upload vertex/framgment shader to our program  
-			program.upload( vertexAssembler.agalcode, fragmentAssembler.agalcode );
+			_program.upload( vertexAssembler.agalcode, fragmentAssembler.agalcode );
 
 		}
 
 
 		public function setProgram( context:Context3D ):void
 		{
-			context.setProgram( program );
+			context.setProgram( _program );
 
 		}
 	}

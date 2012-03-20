@@ -20,8 +20,7 @@ package com.potmo.p2d.renderer
 		private var _antialias:uint;
 		private var _context:Context3D;
 		private var _program:P2DRenderProgram;
-		private var _atlases:Vector.<P2DTextureAtlas>;
-		private var _atlasCount:int;
+		private var _atlas:P2DTextureAtlas;
 
 		private var _matrix:Matrix;
 		private var _matrixVector:Vector.<Number>;
@@ -33,13 +32,12 @@ package com.potmo.p2d.renderer
 		private var _backBufferHeightInv:Number;
 
 
-		public function P2DRenderer( viewPort:Rectangle, antialias:uint, atlases:Vector.<P2DTextureAtlas> )
+		public function P2DRenderer( viewPort:Rectangle, antialias:uint, atlas:P2DTextureAtlas )
 		{
 			_matrix = new Matrix();
 			_viewPort = viewPort;
-			_atlases = atlases;
+			_atlas = atlas;
 			_antialias = antialias;
-			_atlasCount = _atlases.length;
 			_program = new P2DRenderProgram();
 			_matrixVector = new Vector.<Number>( 12, true );
 			_backBufferWidth = _viewPort.width;
@@ -65,12 +63,8 @@ package com.potmo.p2d.renderer
 			this._context = context;
 			context.configureBackBuffer( _viewPort.width, _viewPort.height, _antialias, true );
 
-			_program.createProgram( context );
-
-			for ( var i:int = 0; i < _atlasCount; i++ )
-			{
-				_atlases[ i ].handleContextCreated( context );
-			}
+			_atlas.handleContextCreated( context );
+			_program.createProgram( context, _atlas.getTextureCount() );
 
 		}
 
@@ -85,20 +79,17 @@ package com.potmo.p2d.renderer
 		{
 			_program.setProgram( _context );
 
-			var atlas:P2DTextureAtlas;
-
 			var vertexBuffer:VertexBuffer3D;
 
-			for ( var i:int = 0; i < _atlasCount; i++ )
+			for ( var i:int = 0; i < _atlas.getTextureCount(); i++ )
 			{
-				atlas = _atlases[ i ];
-				_context.setTextureAt( i, atlas.getTexure() );
-
-				vertexBuffer = atlas.getVertexBuffer();
-				//TODO: need some other vertex buffer here I think for seconds texture
-				_context.setVertexBufferAt( 0, vertexBuffer, 0, Context3DVertexBufferFormat.FLOAT_2 );
-				_context.setVertexBufferAt( 1, vertexBuffer, 2, Context3DVertexBufferFormat.FLOAT_2 );
+				_context.setTextureAt( i, _atlas.getTexure( i ) );
 			}
+
+			vertexBuffer = _atlas.getVertexBuffer();
+			_context.setVertexBufferAt( 0, vertexBuffer, 0, Context3DVertexBufferFormat.FLOAT_2 );
+			_context.setVertexBufferAt( 1, vertexBuffer, 2, Context3DVertexBufferFormat.FLOAT_2 );
+			_context.setVertexBufferAt( 2, vertexBuffer, 4, Context3DVertexBufferFormat.FLOAT_2 );
 
 		}
 
@@ -107,6 +98,11 @@ package com.potmo.p2d.renderer
 		{
 			_matrix.createBox( scaleX, scaleY, rotation, x * 2 - _backBufferWidth, _backBufferHeight - y * 2 );
 			_matrix.scale( _backBufferWidthInv, _backBufferHeightInv );
+
+			//check nd2d's Sprite2sBatch and Sprite2dBatchmaterial
+
+			//TODO: Append to one matrix vector for later execution (This should be pushed to ProgramConstants and then pulled in vertext shader)
+			// same for the fragmen shader
 			_matrixVector[ 0 ] = _matrix.a;
 			_matrixVector[ 1 ] = _matrix.c;
 			_matrixVector[ 2 ] = _matrix.tx;
@@ -114,23 +110,26 @@ package com.potmo.p2d.renderer
 			_matrixVector[ 5 ] = _matrix.d;
 			_matrixVector[ 6 ] = _matrix.ty;
 
+			//TODO: Append to one big transform vector for later execution
 			_transformVector[ 0 ] = 1.0;
 			_transformVector[ 1 ] = 1.0;
 			_transformVector[ 2 ] = 1.0;
 			_transformVector[ 3 ] = 1.0; // alpha here
-			_context.setProgramConstantsFromVector( Context3DProgramType.FRAGMENT, 0, _transformVector, 1 );
-
+			//_context.setProgramConstantsFromVector( Context3DProgramType.FRAGMENT, 0, _transformVector, 1 ); // this is the colortransform but we dont care about it now
 			_context.setProgramConstantsFromVector( Context3DProgramType.VERTEX, 0, _matrixVector, 3 );
 
 			//var indexBuffer:IndexBuffer3D = _atlases.getIndexBuffer();
-			var indexBuffer:IndexBuffer3D = _atlases[ atlasId ].getIndexBuffer();
+			var indexBuffer:IndexBuffer3D = _atlas.getIndexBuffer();
 			_context.drawTriangles( indexBuffer, frame * 6, 2 );
 		}
 
 
 		public function render( displayRoot:Renderable ):void
 		{
+			//TODO: Set batch num to 0
 			displayRoot.render( this );
+			//TODO: Set program constants from vector and draw the full batch
+			// remember that we might have to do this more often if the batch is full
 
 		}
 
