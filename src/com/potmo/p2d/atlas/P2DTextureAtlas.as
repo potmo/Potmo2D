@@ -70,7 +70,7 @@ package com.potmo.p2d.atlas
 
 		public function handleContextCreated( context:Context3D ):void
 		{
-			createVertices( context, "center", _sizes, _offsets, _frames, _textureBitmaps, _textureFrameOffsets );
+			createVertices( context, "lefttop", _sizes, _offsets, _frames, _textureBitmaps, _textureFrameOffsets );
 
 			uploadTextures( context );
 
@@ -94,21 +94,37 @@ package com.potmo.p2d.atlas
 
 		private function uploadTexture( context:Context3D, textureBitmap:BitmapData ):Texture
 		{
-			var texture:Texture = context.createTexture( textureBitmap.width, textureBitmap.height, Context3DTextureFormat.BGRA, false );
+			var textureWidth:int = getNextPowerOfTwo( textureBitmap.width );
+			var textureHeight:int = getNextPowerOfTwo( textureBitmap.height );
+			var texture:Texture = context.createTexture( textureWidth, textureHeight, Context3DTextureFormat.BGRA, false );
 			//_texture.uploadFromBitmapData( textureBitmap, 0 );
-			uploadBitmapData( texture, textureBitmap, false );
+			uploadBitmapData( texture, textureBitmap, textureWidth, textureHeight, false );
 			return texture;
 		}
 
 
-		private function uploadBitmapData( texture:Texture, bitmapData:BitmapData, generateMipmaps:Boolean ):void
+		private function getNextPowerOfTwo( n:Number ):Number
+		{
+			var out:Number = 2.0;
+
+			while ( out < n )
+			{
+				// pow 2
+				out <<= 1;
+			}
+
+			return out;
+		}
+
+
+		private function uploadBitmapData( texture:Texture, bitmapData:BitmapData, textureWidth:Number, textureHeight:Number, generateMipmaps:Boolean ):void
 		{
 			texture.uploadFromBitmapData( bitmapData );
 
 			if ( generateMipmaps )
 			{
-				var currentWidth:int = bitmapData.width >> 1;
-				var currentHeight:int = bitmapData.height >> 1;
+				var currentWidth:int = textureWidth >> 1;
+				var currentHeight:int = textureHeight >> 1;
 				var level:int = 1;
 				var canvas:BitmapData = new BitmapData( currentWidth, currentHeight, true, 0 );
 				var transform:Matrix = new Matrix( .5, 0, 0, .5 );
@@ -136,7 +152,7 @@ package com.potmo.p2d.atlas
 
 			// get the frame offset and the next frame offset
 			var currentTexture:int = -1;
-			var currentTextureLastFrame:uint = 0;
+			var currentTextureLastFrame:int = -1;
 			var currentTextureWidth:uint;
 			var currentTextureHeight:uint;
 
@@ -151,11 +167,11 @@ package com.potmo.p2d.atlas
 			{
 
 				// swap to the next texture
-				if ( c == currentTextureLastFrame )
+				if ( c >= currentTextureLastFrame )
 				{
 					currentTexture++;
 
-					if ( currentTexture < textureFrameOffsets.length - 1 )
+					if ( currentTexture + 1 < textureFrameOffsets.length )
 					{
 						currentTextureLastFrame = textureFrameOffsets[ currentTexture + 1 ];
 					}
@@ -164,8 +180,8 @@ package com.potmo.p2d.atlas
 						currentTextureLastFrame = numFrames;
 					}
 
-					currentTextureWidth = textureBitmaps[ currentTexture ].width;
-					currentTextureHeight = textureBitmaps[ currentTexture ].height;
+					currentTextureWidth = getNextPowerOfTwo( textureBitmaps[ currentTexture ].width );
+					currentTextureHeight = getNextPowerOfTwo( textureBitmaps[ currentTexture ].height );
 				}
 
 				var x:Number = frames[ c ].x;
@@ -274,8 +290,6 @@ package com.potmo.p2d.atlas
 				vd[ v++ ] = v1;
 				vd[ v++ ] = currentTexture == 0 ? 1 : 0; //w
 				vd[ v++ ] = currentTexture == 1 ? 1 : 0; //w
-
-				// texture mask (1 * FLOAT_2)
 
 				// indices (two triangles times 3 vertices)
 				id[ i++ ] = ( c * 4 + 0 );

@@ -69,13 +69,13 @@ package com.potmo.p2d.renderer
 		}
 
 
-		public function clear( r:Number = 0, g:Number = 0, b:Number = 0, a:Number = 0 ):void
+		private function clear( r:Number = 0, g:Number = 0, b:Number = 0, a:Number = 0 ):void
 		{
 			_context.clear( r, g, b, a );
 		}
 
 
-		public function prepareRender():void
+		private function prepareRender():void
 		{
 			_program.setProgram( _context );
 
@@ -94,7 +94,7 @@ package com.potmo.p2d.renderer
 		}
 
 
-		public function draw( atlasId:int, frame:uint, x:Number, y:Number, rotation:Number, scaleX:Number, scaleY:Number ):void
+		public function draw( frame:uint, x:Number, y:Number, rotation:Number, scaleX:Number, scaleY:Number ):void
 		{
 			_matrix.createBox( scaleX, scaleY, rotation, x * 2 - _backBufferWidth, _backBufferHeight - y * 2 );
 			_matrix.scale( _backBufferWidthInv, _backBufferHeightInv );
@@ -103,6 +103,8 @@ package com.potmo.p2d.renderer
 
 			//TODO: Append to one matrix vector for later execution (This should be pushed to ProgramConstants and then pulled in vertext shader)
 			// same for the fragmen shader
+
+			//this matrix vector has a length of 12 
 			_matrixVector[ 0 ] = _matrix.a;
 			_matrixVector[ 1 ] = _matrix.c;
 			_matrixVector[ 2 ] = _matrix.tx;
@@ -115,8 +117,9 @@ package com.potmo.p2d.renderer
 			_transformVector[ 1 ] = 1.0;
 			_transformVector[ 2 ] = 1.0;
 			_transformVector[ 3 ] = 1.0; // alpha here
-			//_context.setProgramConstantsFromVector( Context3DProgramType.FRAGMENT, 0, _transformVector, 1 ); // this is the colortransform but we dont care about it now
-			_context.setProgramConstantsFromVector( Context3DProgramType.VERTEX, 0, _matrixVector, 3 );
+
+			_context.setProgramConstantsFromVector( Context3DProgramType.VERTEX, 0, _transformVector, 1 ); // this is the colortransform but we dont care about it now
+			_context.setProgramConstantsFromVector( Context3DProgramType.VERTEX, 1, _matrixVector, 3 );
 
 			//var indexBuffer:IndexBuffer3D = _atlases.getIndexBuffer();
 			var indexBuffer:IndexBuffer3D = _atlas.getIndexBuffer();
@@ -126,15 +129,20 @@ package com.potmo.p2d.renderer
 
 		public function render( displayRoot:Renderable ):void
 		{
+			this.clear();
+			this.prepareRender();
+
 			//TODO: Set batch num to 0
 			displayRoot.render( this );
 			//TODO: Set program constants from vector and draw the full batch
 			// remember that we might have to do this more often if the batch is full
 
+			this.present();
+
 		}
 
 
-		public function present():void
+		private function present():void
 		{
 			_context.present();
 		}

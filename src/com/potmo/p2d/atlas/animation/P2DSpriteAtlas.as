@@ -7,17 +7,15 @@ package com.potmo.p2d.atlas.animation
 
 		private var _sequences:Vector.<P2DSpriteAtlasSequence>;
 		private var _sequenceCount:uint;
-		private var _atlasId:int;
 
 
-		public function P2DSpriteAtlas( atlasId:int, names:Vector.<String>, frameSizes:Vector.<Point> )
+		public function P2DSpriteAtlas( names:Vector.<String>, frameSizes:Vector.<Point> )
 		{
 
 			_sequences = new Vector.<P2DSpriteAtlasSequence>();
 			_sequenceCount = 0;
 
-			createSequences( atlasId, names, frameSizes );
-			_atlasId = atlasId;
+			createSequences( names, frameSizes );
 
 		}
 
@@ -32,7 +30,7 @@ package com.potmo.p2d.atlas.animation
 
 			if ( !sequence )
 			{
-				throw new Error( "No sequence founds called: " + name + " in atlasId: " + _atlasId );
+				throw new Error( "No sequence founds called: " + name );
 			}
 
 			return sequence;
@@ -56,7 +54,7 @@ package com.potmo.p2d.atlas.animation
 		}
 
 
-		private function createSequences( atlasId:uint, names:Vector.<String>, frameSizes:Vector.<Point> ):void
+		private function createSequences( names:Vector.<String>, frameSizes:Vector.<Point> ):void
 		{
 			var length:int = names.length;
 
@@ -96,7 +94,7 @@ package com.potmo.p2d.atlas.animation
 
 				if ( !sequence )
 				{
-					sequence = createSequence( atlasId, sequenceName );
+					sequence = createSequence( sequenceName );
 				}
 				var frameSize:Point = frameSizes[ i ];
 
@@ -106,9 +104,9 @@ package com.potmo.p2d.atlas.animation
 		}
 
 
-		private function createSequence( atlas:int, name:String ):P2DSpriteAtlasSequence
+		private function createSequence( name:String ):P2DSpriteAtlasSequence
 		{
-			var sequence:P2DSpriteAtlasSequence = new P2DSpriteAtlasSequence( atlas, name );
+			var sequence:P2DSpriteAtlasSequence = new P2DSpriteAtlasSequence( name );
 			_sequences.push( sequence );
 			_sequenceCount++;
 			return sequence;

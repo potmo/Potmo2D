@@ -29,10 +29,11 @@ package com.potmo.p2d.renderer
 		 * vertex shader to batch from multiple textures
 		 */
 		private static const VERTEX_SHADER_2_TEXTURE_BATCH:Vector.<String> = new <String>[ "mov vt0.xyzw, va0.xyww\n", // copy two first floats (setVertexBufferAt(0...)
-																						   "m33 vt0.xyz, vt0, vc0\n", // multiply matrix (setProgramContantFromVector)
+																						   "m33 vt0.xyz, vt0, vc1\n", // multiply matrix (setProgramContantFromVector)
 																						   "mov op, vt0\n", // print out
 																						   "mov v0, va1\n", // pass uv to fragment shader (setVertexBufferAt(1...)
-																						   "mov v1, va2\n" ]; // pass mask to fragment shader (setVertexBufferAt(1...)
+																						   "mov v1, va2\n", // pass textureIdMask to fragment shader (setVertexBufferAt(1...)
+																						   "mov v2, vc0\n" ]; // pass colortransform to fragment shader 
 		/**
 		 * http://blog.flash-core.com/?p=493
 		 */
@@ -41,7 +42,8 @@ package com.potmo.p2d.renderer
 																							 "mul ft0, ft0, v1.xxxx\n", // multiply with mask 1
 																							 "tex ft1, v0, fs1 <2d,clamp,mipnone>\n", // sample texture 2
 																							 "mul ft1, ft1, v1.yyyy\n", // multiply with mask 2
-																							 "add oc, ft0, ft1\n" ]; // add color 1 and color 2 and copy to output
+																							 "add ft0, ft0, ft1\n", // add color 1 and color 2 
+																							 "mul oc, ft0, v2" ]; // multiply with colortransform and copy to output
 
 		private var _program:Program3D;
 

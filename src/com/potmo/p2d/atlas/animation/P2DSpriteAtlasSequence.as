@@ -12,7 +12,6 @@ package com.potmo.p2d.atlas.animation
 	public class P2DSpriteAtlasSequence implements SpriteAtlasSequence
 	{
 		private var _name:String;
-		private var _atlasId:int;
 		private var _sequenceFrameCount:int;
 		private var _labels:Vector.<String>;
 		private var _atlasFrames:Vector.<uint>;
@@ -20,9 +19,8 @@ package com.potmo.p2d.atlas.animation
 		private var _frameSize:Vector.<Point>;
 
 
-		public function P2DSpriteAtlasSequence( atlas:int, name:String )
+		public function P2DSpriteAtlasSequence( name:String )
 		{
-			_atlasId = atlas;
 			_name = name;
 			_labels = new Vector.<String>();
 			_atlasFrames = new Vector.<uint>();
@@ -103,12 +101,6 @@ package com.potmo.p2d.atlas.animation
 		{
 			//TODO: Convert frame to sequence frame
 			return _frameSize[ frame ];
-		}
-
-
-		public function getAtlasId():uint
-		{
-			return _atlasId;
 		}
 
 	}

@@ -8,7 +8,6 @@ package com.potmo.p2d.renderer
 		/**
 		 * Render a frame to the canvas
 		 *
-		 * @param the atlas to get images from
 		 * @param frame the frame in the atlas to be rendered
 		 * @param x position to render
 		 * @param y position to render
@@ -17,7 +16,7 @@ package com.potmo.p2d.renderer
 		 * @param scaleY scale to render frame
 		 *
 		 */
-		function draw( atlasId:int, frame:uint, x:Number, y:Number, rotation:Number, scaleX:Number, scaleY:Number ):void;
+		function draw( frame:uint, x:Number, y:Number, rotation:Number, scaleX:Number, scaleY:Number ):void;
 
 	}
 }
