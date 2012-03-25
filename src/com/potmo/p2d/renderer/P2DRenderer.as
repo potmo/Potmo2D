@@ -31,8 +31,10 @@ package com.potmo.p2d.renderer
 		private var _backBufferWidthInv:Number;
 		private var _backBufferHeightInv:Number;
 
+		private var _camera:P2DCamera;
 
-		public function P2DRenderer( viewPort:Rectangle, antialias:uint, atlas:P2DTextureAtlas )
+
+		public function P2DRenderer( viewPort:Rectangle, antialias:uint, atlas:P2DTextureAtlas, camera:P2DCamera )
 		{
 			_matrix = new Matrix();
 			_viewPort = viewPort;
@@ -44,6 +46,7 @@ package com.potmo.p2d.renderer
 			_backBufferHeight = _viewPort.height;
 			_backBufferWidthInv = 1.0 / _backBufferWidth;
 			_backBufferHeightInv = 1.0 / _backBufferHeight;
+			_camera = camera;
 
 			for ( var c:uint = 0; c < 12; c++ )
 			{
@@ -96,13 +99,14 @@ package com.potmo.p2d.renderer
 
 		public function draw( frame:uint, x:Number, y:Number, rotation:Number, scaleX:Number, scaleY:Number ):void
 		{
-			_matrix.createBox( scaleX, scaleY, rotation, x * 2 - _backBufferWidth, _backBufferHeight - y * 2 );
+			_matrix.createBox( scaleX, scaleY, rotation, ( x - _camera.getCameraX() ) * 2 - _backBufferWidth, _backBufferHeight - ( y + _camera.getCameraY() ) * 2 );
 			_matrix.scale( _backBufferWidthInv, _backBufferHeightInv );
 
 			//check nd2d's Sprite2sBatch and Sprite2dBatchmaterial
 
 			//TODO: Append to one matrix vector for later execution (This should be pushed to ProgramConstants and then pulled in vertext shader)
 			// same for the fragmen shader
+			// we must also upload a new vertex buffer containing the ids that point to the constants for each vertex
 
 			//this matrix vector has a length of 12 
 			_matrixVector[ 0 ] = _matrix.a;
