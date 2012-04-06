@@ -108,6 +108,8 @@ package com.potmo.p2d.renderer
 			// same for the fragmen shader
 			// we must also upload a new vertex buffer containing the ids that point to the constants for each vertex
 
+			//TODO: Do not draw stuff that is fully outside the screen
+
 			//this matrix vector has a length of 12 
 			_matrixVector[ 0 ] = _matrix.a;
 			_matrixVector[ 1 ] = _matrix.c;
