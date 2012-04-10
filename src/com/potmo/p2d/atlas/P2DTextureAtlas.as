@@ -17,7 +17,6 @@ package com.potmo.p2d.atlas
 
 	public class P2DTextureAtlas
 	{
-		private var _sizes:Vector.<Point>;
 		private var _offsets:Vector.<Point>;
 		private var _frames:Vector.<Rectangle>;
 		private var _frameCount:uint;
@@ -31,14 +30,17 @@ package com.potmo.p2d.atlas
 		private var _textureCount:int;
 		// the frame offsets. That is the second element will be equal to the nuber of frames of the first texture
 		private var _textureFrameOffsets:Vector.<uint>;
+		private var _regpoints:Vector.<Point>;
+		private var _spriteSizes:Vector.<Point>;
 
 
 		public function P2DTextureAtlas()
 		{
-			_sizes = new Vector.<Point>();
 			_offsets = new Vector.<Point>();
 			_frames = new Vector.<Rectangle>();
 			_names = new Vector.<String>();
+			_regpoints = new Vector.<Point>();
+			_spriteSizes = new Vector.<Point>();
 			_textureFrameOffsets = new Vector.<uint>();
 			_textureBitmaps = new Vector.<BitmapData>();
 			_textureCount = 0;
@@ -51,17 +53,19 @@ package com.potmo.p2d.atlas
 			_textureFrameOffsets.push( _frames.length - 1 );
 
 			// parse the xml and get the vectors populated
-			var sizes:Vector.<Point> = new Vector.<Point>();
 			var offsets:Vector.<Point> = new Vector.<Point>();
 			var frames:Vector.<Rectangle> = new Vector.<Rectangle>();
 			var names:Vector.<String> = new Vector.<String>();
-			parser.parse( xmlDescriptor, sizes, offsets, frames, names );
+			var regpoints:Vector.<Point> = new Vector.<Point>();
+			var spriteSizes:Vector.<Point> = new Vector.<Point>();
+			parser.parse( xmlDescriptor, offsets, spriteSizes, frames, names, regpoints );
 
 			//add the populated vectors to our full list
-			_sizes = _sizes.concat( sizes );
 			_offsets = _offsets.concat( offsets );
 			_frames = _frames.concat( frames );
 			_names = _names.concat( names );
+			_regpoints = _regpoints.concat( regpoints );
+			_spriteSizes = _regpoints.concat( spriteSizes );
 
 			_textureBitmaps.push( textureBitmap );
 			_textureCount++;
@@ -70,7 +74,7 @@ package com.potmo.p2d.atlas
 
 		public function handleContextCreated( context:Context3D ):void
 		{
-			createVertices( context, "lefttop", _sizes, _offsets, _frames, _textureBitmaps, _textureFrameOffsets );
+			createVertices( context, _offsets, _frames, _textureBitmaps, _textureFrameOffsets, _regpoints );
 
 			uploadTextures( context );
 
@@ -147,7 +151,7 @@ package com.potmo.p2d.atlas
 		}
 
 
-		private function createVertices( context:Context3D, registrationPoint:String, sizes:Vector.<Point>, offsets:Vector.<Point>, frames:Vector.<Rectangle>, textureBitmaps:Vector.<BitmapData>, textureFrameOffsets:Vector.<uint> ):void
+		private function createVertices( context:Context3D, drawInSpriteOffset:Vector.<Point>, textureSourceFrames:Vector.<Rectangle>, textureBitmaps:Vector.<BitmapData>, textureFrameOffsets:Vector.<uint>, regPoints:Vector.<Point> ):void
 		{
 
 			// get the frame offset and the next frame offset
@@ -158,7 +162,7 @@ package com.potmo.p2d.atlas
 
 			var v:uint = 0;
 			var i:uint = 0;
-			var numFrames:uint = frames.length;
+			var numFrames:uint = textureSourceFrames.length;
 
 			var vd:Vector.<Number> = new Vector.<Number>( numFrames * 24, true );
 			var id:Vector.<uint> = new Vector.<uint>( numFrames * 6, true );
@@ -184,108 +188,65 @@ package com.potmo.p2d.atlas
 					currentTextureHeight = getNextPowerOfTwo( textureBitmaps[ currentTexture ].height );
 				}
 
-				var x:Number = frames[ c ].x;
-				var y:Number = frames[ c ].y;
-				var w:Number = frames[ c ].width;
-				var h:Number = frames[ c ].height;
+				// the source coordinates in the texture bitmapdata
+				var sourceX:Number = textureSourceFrames[ c ].x;
+				var sourceY:Number = textureSourceFrames[ c ].y;
+				var sourceWidth:Number = textureSourceFrames[ c ].width;
+				var sourceHeight:Number = textureSourceFrames[ c ].height;
 
-				var x0:Number = -w;
-				var y0:Number = +h;
-				var x1:Number = +w;
-				var y1:Number = -h;
+				// create the model in local coordinates. Aligned upper left
+				// first vertex in bottom left corner and then counter clockwise
+				var modelX0:Number = 0;
+				var modelY0:Number = sourceHeight;
+				var modelX1:Number = sourceWidth;
+				var modelY1:Number = 0;
 
-				if ( offsets.length > 0 )
-				{
-					var ox:Number = offsets[ c ].x;
-					var oy:Number = offsets[ c ].y;
-					x0 += ox * 2;
-					y0 += oy * 2;
-					x1 += ox * 2;
-					y1 += oy * 2;
-				}
+				// translate by texture offset in sprite frame
+				var ox:Number = drawInSpriteOffset[ c ].x;
+				var oy:Number = drawInSpriteOffset[ c ].y;
+				modelX0 += ox;
+				modelY0 += oy;
+				modelX1 += ox;
+				modelY1 += oy;
 
-				if ( registrationPoint != "center" )
-				{
-					var sx:Number;
-					var sy:Number;
+				// translate by regpoing (0,0 is upper left)
+				var rx:Number = regPoints[ c ].x;
+				var ry:Number = regPoints[ c ].y;
+				modelX0 -= rx;
+				modelY0 -= ry;
+				modelX1 -= rx;
+				modelY1 -= ry;
 
-					if ( sizes.length > 0 )
-					{
-						sx = sizes[ c ].x;
-						sy = sizes[ c ].y;
-					}
-					else
-					{
-						sx = frames[ 0 ].width;
-						sy = frames[ 0 ].height;
-					}
-
-					switch ( registrationPoint )
-					{
-						case "lefttop":
-						{
-							x0 += sx;
-							y0 -= sy;
-							x1 += sx;
-							y1 -= sy;
-						}
-							break;
-						case "righttop":
-						{
-							x0 -= sx;
-							y0 -= sy;
-							x1 -= sx;
-							y1 -= sy;
-						}
-							break;
-						case "leftbottom":
-						{
-							x0 += sx;
-							y0 += sy;
-							x1 += sx;
-							y1 += sy;
-						}
-							break;
-						case "rightbottom":
-						{
-							x0 -= sx;
-							y0 += sy;
-							x1 -= sx;
-							y1 += sy;
-						}
-							break;
-					}
-				}
-
-				var u0:Number = ( x ) / currentTextureWidth;
-				var v0:Number = ( y ) / currentTextureHeight;
-				var u1:Number = ( x + w ) / currentTextureWidth;
-				var v1:Number = ( y + h ) / currentTextureHeight;
+				// scale texture coordinates to UV coordinates (unit coordinates)
+				var u0:Number = ( sourceX ) / currentTextureWidth;
+				var v0:Number = ( sourceY ) / currentTextureHeight;
+				var u1:Number = ( sourceX + sourceWidth ) / currentTextureWidth;
+				var v1:Number = ( sourceY + sourceHeight ) / currentTextureHeight;
 
 				// frame sizes and uv (2 * FLOAT_2)
-				vd[ v++ ] = x0;
-				vd[ v++ ] = y0;
+				vd[ v++ ] = modelX0;
+				vd[ v++ ] = modelY0;
 				vd[ v++ ] = u0;
 				vd[ v++ ] = v0;
 				vd[ v++ ] = currentTexture == 0 ? 1 : 0; //x
 				vd[ v++ ] = currentTexture == 1 ? 1 : 0; //x
 
-				vd[ v++ ] = x1;
-				vd[ v++ ] = y0;
+				vd[ v++ ] = modelX1;
+				vd[ v++ ] = modelY0;
 				vd[ v++ ] = u1;
 				vd[ v++ ] = v0;
 				vd[ v++ ] = currentTexture == 0 ? 1 : 0; //y
 				vd[ v++ ] = currentTexture == 1 ? 1 : 0; //y
 
-				vd[ v++ ] = x1;
-				vd[ v++ ] = y1;
+				vd[ v++ ] = modelX1;
+				vd[ v++ ] = modelY1;
 				vd[ v++ ] = u1;
 				vd[ v++ ] = v1;
 				vd[ v++ ] = currentTexture == 0 ? 1 : 0; //z
 				vd[ v++ ] = currentTexture == 1 ? 1 : 0; //z
 
-				vd[ v++ ] = x0;
-				vd[ v++ ] = y1;
+				vd[ v++ ] = modelX0;
+				vd[ v++ ] = modelY1;
 				vd[ v++ ] = u0;
 				vd[ v++ ] = v1;
 				vd[ v++ ] = currentTexture == 0 ? 1 : 0; //w
@@ -301,7 +262,7 @@ package com.potmo.p2d.atlas
 
 			}
 
-			_frameCount = frames.length;
+			_frameCount = textureSourceFrames.length;
 			_indexBuffer = context.createIndexBuffer( id.length );
 			_indexBuffer.uploadFromVector( id, 0, id.length );
 
@@ -319,15 +280,14 @@ package com.potmo.p2d.atlas
 
 		public function getFrameNames():Vector.<String>
 		{
-			// clone
-			return _names.concat();
+
+			return _names.concat(); // clone
 		}
 
 
-		public function getFrameSizes():Vector.<Point>
+		public function getSpriteSizes():Vector.<Point>
 		{
-			// clone
-			return _sizes.concat();
+			return _spriteSizes.concat(); // clone
 		}
 
 
