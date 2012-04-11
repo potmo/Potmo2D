@@ -9,13 +9,13 @@ package com.potmo.p2d.atlas.animation
 		private var _sequenceCount:uint;
 
 
-		public function P2DSpriteAtlas( names:Vector.<String>, frameSizes:Vector.<Point> )
+		public function P2DSpriteAtlas( sequenceFrames:Vector.<int>, names:Vector.<String>, labels:Vector.<String>, frameSizes:Vector.<Point> )
 		{
 
 			_sequences = new Vector.<P2DSpriteAtlasSequence>();
 			_sequenceCount = 0;
 
-			createSequences( names, frameSizes );
+			createSequences( sequenceFrames, names, labels, frameSizes );
 
 		}
 
@@ -54,41 +54,16 @@ package com.potmo.p2d.atlas.animation
 		}
 
 
-		private function createSequences( names:Vector.<String>, frameSizes:Vector.<Point> ):void
+		private function createSequences( sequenceFrames:Vector.<int>, names:Vector.<String>, labels:Vector.<String>, frameSizes:Vector.<Point> ):void
 		{
 			var length:int = names.length;
 
 			for ( var i:int = 0; i < length; i++ )
 			{
-				var name:String = names[ i ];
 
-				// a frame name should be formatted as
-				// spritename/00001_label.png
-
-				var spriteFrameSplit:int = name.indexOf( "/" );
-
-				if ( spriteFrameSplit == -1 )
-				{
-					throw new Error( "can not parse name: " + name + " it does not contain slash" );
-				}
-
-				var frameLabelSplit:int = name.indexOf( "_" );
-
-				if ( frameLabelSplit == -1 )
-				{
-					throw new Error( "can not parse name " + name + " it does not contain underscore" );
-				}
-
-				var frameLabelEnd:int = name.lastIndexOf( "." );
-
-				if ( frameLabelEnd == -1 )
-				{
-					frameLabelEnd = int.MAX_VALUE;
-				}
-
-				var sequenceName:String = name.substring( 0, spriteFrameSplit );
-				var sequenceFrame:int = parseInt( name.substring( spriteFrameSplit + 1, frameLabelSplit ) );
-				var label:String = name.substring( frameLabelSplit + 1, frameLabelEnd );
+				var sequenceName:String = names[ i ];
+				var sequenceFrame:int = sequenceFrames[ i ]
+				var label:String = labels[ i ];
 
 				var sequence:P2DSpriteAtlasSequence = getP2DSequenceByName( sequenceName );
 

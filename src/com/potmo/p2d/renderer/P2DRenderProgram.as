@@ -59,7 +59,7 @@ package com.potmo.p2d.renderer
 			switch ( numberOfTextures )
 			{
 				case 1:
-					return VERTEX_SHADER.join( "" );
+				//return VERTEX_SHADER.join( "" );
 				case 2:
 					return VERTEX_SHADER_2_TEXTURE_BATCH.join( "" );
 				default:
@@ -73,7 +73,7 @@ package com.potmo.p2d.renderer
 			switch ( numberOfTextures )
 			{
 				case 1:
-					return FRAGMENT_SHADER_ALPHA.join( "" );
+				//return FRAGMENT_SHADER_ALPHA.join( "" );
 				case 2:
 					return FRAGMENT_SHADER_2_TEXTURE_BATCH.join( "" );
 				default:

@@ -5,6 +5,6 @@ package com.potmo.p2d.atlas.parser
 
 	public interface AtlasParser
 	{
-		function parse( descriptor:XML, textureInSpriteOffsets:Vector.<Point>, spriteSizes:Vector.<Point>, textureSourceRects:Vector.<Rectangle>, names:Vector.<String>, regpointsInSprites:Vector.<Point> ):void;
+		function parse( descriptor:XML, spriteSizes:Vector.<Point>, regpointsInSprites:Vector.<Point>, textureInSpriteOffsets:Vector.<Point>, textureSourceRects:Vector.<Rectangle>, sequenceFrames:Vector.<int>, names:Vector.<String>, labels:Vector.<String> ):void;
 	}
 }

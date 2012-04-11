@@ -17,8 +17,8 @@ package com.potmo.p2d.atlas
 
 	public class P2DTextureAtlas
 	{
-		private var _offsets:Vector.<Point>;
-		private var _frames:Vector.<Rectangle>;
+		private var _texureInSpiteOffsets:Vector.<Point>;
+		private var _textureSourceRects:Vector.<Rectangle>;
 		private var _frameCount:uint;
 		private var _indexBuffer:IndexBuffer3D;
 		private var _vertexBuffer:VertexBuffer3D;
@@ -32,17 +32,21 @@ package com.potmo.p2d.atlas
 		private var _textureFrameOffsets:Vector.<uint>;
 		private var _regpoints:Vector.<Point>;
 		private var _spriteSizes:Vector.<Point>;
+		private var _sequenceFrames:Vector.<int>;
+		private var _labels:Vector.<String>;
 
 
 		public function P2DTextureAtlas()
 		{
-			_offsets = new Vector.<Point>();
-			_frames = new Vector.<Rectangle>();
+			_texureInSpiteOffsets = new Vector.<Point>();
+			_textureSourceRects = new Vector.<Rectangle>();
 			_names = new Vector.<String>();
 			_regpoints = new Vector.<Point>();
 			_spriteSizes = new Vector.<Point>();
 			_textureFrameOffsets = new Vector.<uint>();
 			_textureBitmaps = new Vector.<BitmapData>();
+			_sequenceFrames = new Vector.<int>();
+			_labels = new Vector.<String>();
 			_textureCount = 0;
 		}
 
@@ -50,22 +54,26 @@ package com.potmo.p2d.atlas
 		public function addTexture( xmlDescriptor:XML, textureBitmap:BitmapData, parser:AtlasParser ):void
 		{
 			// Push the number of frames that we had before adding a new texture
-			_textureFrameOffsets.push( _frames.length - 1 );
+			_textureFrameOffsets.push( _textureSourceRects.length - 1 );
 
 			// parse the xml and get the vectors populated
-			var offsets:Vector.<Point> = new Vector.<Point>();
-			var frames:Vector.<Rectangle> = new Vector.<Rectangle>();
+			var texureInSpiteOffsets:Vector.<Point> = new Vector.<Point>();
+			var textureSourceRects:Vector.<Rectangle> = new Vector.<Rectangle>();
 			var names:Vector.<String> = new Vector.<String>();
 			var regpoints:Vector.<Point> = new Vector.<Point>();
 			var spriteSizes:Vector.<Point> = new Vector.<Point>();
-			parser.parse( xmlDescriptor, offsets, spriteSizes, frames, names, regpoints );
+			var labels:Vector.<String> = new Vector.<String>();
+			var sequenceFrames:Vector.<int> = new Vector.<int>();
+			parser.parse( xmlDescriptor, spriteSizes, regpoints, texureInSpiteOffsets, textureSourceRects, sequenceFrames, names, labels );
 
 			//add the populated vectors to our full list
-			_offsets = _offsets.concat( offsets );
-			_frames = _frames.concat( frames );
+			_texureInSpiteOffsets = _texureInSpiteOffsets.concat( texureInSpiteOffsets );
+			_textureSourceRects = _textureSourceRects.concat( textureSourceRects );
 			_names = _names.concat( names );
 			_regpoints = _regpoints.concat( regpoints );
 			_spriteSizes = _regpoints.concat( spriteSizes );
+			_sequenceFrames = _sequenceFrames.concat( sequenceFrames );
+			_labels = _labels.concat( labels );
 
 			_textureBitmaps.push( textureBitmap );
 			_textureCount++;
@@ -74,7 +82,7 @@ package com.potmo.p2d.atlas
 
 		public function handleContextCreated( context:Context3D ):void
 		{
-			createVertices( context, _offsets, _frames, _textureBitmaps, _textureFrameOffsets, _regpoints );
+			createVertices( context, _texureInSpiteOffsets, _textureSourceRects, _textureBitmaps, _textureFrameOffsets, _regpoints );
 
 			uploadTextures( context );
 
@@ -197,8 +205,8 @@ package com.potmo.p2d.atlas
 				// create the model in local coordinates. Aligned upper left
 				// first vertex in bottom left corner and then counter clockwise
 				var modelX0:Number = 0;
-				var modelY0:Number = sourceHeight;
-				var modelX1:Number = sourceWidth;
+				var modelY0:Number = sourceHeight * 2;
+				var modelX1:Number = sourceWidth * 2;
 				var modelY1:Number = 0;
 
 				// translate by texture offset in sprite frame
@@ -282,6 +290,18 @@ package com.potmo.p2d.atlas
 		{
 
 			return _names.concat(); // clone
+		}
+
+
+		public function getSequenceFrames():Vector.<int>
+		{
+			return _sequenceFrames.concat(); // clone
+		}
+
+
+		public function getFrameLabels():Vector.<String>
+		{
+			return _labels.concat(); //clone
 		}
 
 
