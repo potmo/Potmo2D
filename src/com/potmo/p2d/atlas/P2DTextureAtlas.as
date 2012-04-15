@@ -71,7 +71,7 @@ package com.potmo.p2d.atlas
 			_textureSourceRects = _textureSourceRects.concat( textureSourceRects );
 			_names = _names.concat( names );
 			_regpoints = _regpoints.concat( regpoints );
-			_spriteSizes = _regpoints.concat( spriteSizes );
+			_spriteSizes = _spriteSizes.concat( spriteSizes );
 			_sequenceFrames = _sequenceFrames.concat( sequenceFrames );
 			_labels = _labels.concat( labels );
 
@@ -82,7 +82,7 @@ package com.potmo.p2d.atlas
 
 		public function handleContextCreated( context:Context3D ):void
 		{
-			createVertices( context, _texureInSpiteOffsets, _textureSourceRects, _textureBitmaps, _textureFrameOffsets, _regpoints );
+			createVertices( context, _texureInSpiteOffsets, _spriteSizes, _textureSourceRects, _textureBitmaps, _textureFrameOffsets, _regpoints );
 
 			uploadTextures( context );
 
@@ -159,7 +159,7 @@ package com.potmo.p2d.atlas
 		}
 
 
-		private function createVertices( context:Context3D, drawInSpriteOffset:Vector.<Point>, textureSourceFrames:Vector.<Rectangle>, textureBitmaps:Vector.<BitmapData>, textureFrameOffsets:Vector.<uint>, regPoints:Vector.<Point> ):void
+		private function createVertices( context:Context3D, drawInSpriteOffset:Vector.<Point>, spriteSizes:Vector.<Point>, textureSourceFrames:Vector.<Rectangle>, textureBitmaps:Vector.<BitmapData>, textureFrameOffsets:Vector.<uint>, regPoints:Vector.<Point> ):void
 		{
 
 			// get the frame offset and the next frame offset
@@ -202,28 +202,35 @@ package com.potmo.p2d.atlas
 				var sourceWidth:Number = textureSourceFrames[ c ].width;
 				var sourceHeight:Number = textureSourceFrames[ c ].height;
 
+				//WARNING:
+				// The coordinate system is positive y upwards and positive x rightwards
+
 				// create the model in local coordinates. Aligned upper left
 				// first vertex in bottom left corner and then counter clockwise
 				var modelX0:Number = 0;
-				var modelY0:Number = sourceHeight * 2;
+				var modelY0:Number = 0;
 				var modelX1:Number = sourceWidth * 2;
-				var modelY1:Number = 0;
+				var modelY1:Number = -sourceHeight * 2;
 
 				// translate by texture offset in sprite frame
-				var ox:Number = drawInSpriteOffset[ c ].x;
-				var oy:Number = drawInSpriteOffset[ c ].y;
+				var ox:Number = drawInSpriteOffset[ c ].x * 2;
+				var oy:Number = -drawInSpriteOffset[ c ].y * 2;
+				//ox = oy = 0;
+
 				modelX0 += ox;
 				modelY0 += oy;
 				modelX1 += ox;
 				modelY1 += oy;
 
 				// translate by regpoing (0,0 is upper left)
-				var rx:Number = regPoints[ c ].x;
-				var ry:Number = regPoints[ c ].y;
-				modelX0 -= rx;
-				modelY0 -= ry;
-				modelX1 -= rx;
-				modelY1 -= ry;
+				var rx:Number = -regPoints[ c ].x * 2;
+				var ry:Number = regPoints[ c ].y * 2;
+				//rx = ry = 0;
+
+				modelX0 += rx;
+				modelY0 += ry;
+				modelX1 += rx;
+				modelY1 += ry;
 
 				// scale texture coordinates to UV coordinates (unit coordinates)
 				var u0:Number = ( sourceX ) / currentTextureWidth;
@@ -231,7 +238,9 @@ package com.potmo.p2d.atlas
 				var u1:Number = ( sourceX + sourceWidth ) / currentTextureWidth;
 				var v1:Number = ( sourceY + sourceHeight ) / currentTextureHeight;
 
-				// frame sizes and uv (2 * FLOAT_2)
+				//TODO: Make it dynamic number of textures
+
+				// frame sizes and uv (2 * FLOAT_2) and texture mask
 				vd[ v++ ] = modelX0;
 				vd[ v++ ] = modelY0;
 				vd[ v++ ] = u0;

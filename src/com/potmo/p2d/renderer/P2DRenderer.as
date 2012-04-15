@@ -100,6 +100,8 @@ package com.potmo.p2d.renderer
 		public function draw( frame:uint, x:Number, y:Number, rotation:Number, scaleX:Number, scaleY:Number, alphaMultiplyer:Number, redMultiplyer:Number, greenMultiplyer:Number, blueMultiplyer:Number ):void
 		{
 			_matrix.createBox( scaleX, scaleY, rotation, ( x - _camera.getCameraX() ) * 2 - _backBufferWidth, _backBufferHeight - ( y + _camera.getCameraY() ) * 2 );
+
+			// TODO: this should be in shader instead. Also camera translation
 			_matrix.scale( _backBufferWidthInv, _backBufferHeightInv );
 
 			//check nd2d's Sprite2sBatch and Sprite2dBatchmaterial
@@ -135,7 +137,7 @@ package com.potmo.p2d.renderer
 
 		public function render( displayRoot:Renderable ):void
 		{
-			this.clear();
+			this.clear( 0.5, 0.5, 0.5, 1 );
 			this.prepareRender();
 
 			//TODO: Set batch num to 0
