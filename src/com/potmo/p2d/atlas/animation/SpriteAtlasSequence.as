@@ -10,5 +10,6 @@ package com.potmo.p2d.atlas.animation
 		function getName():String;
 		function getNextFrame( currentFrame:uint, loop:Boolean, followLabelPointers:Boolean ):uint;
 		function getSizeOfFrame( atlasFrame:uint ):Point;
+		function getRegpointOfFrame( atlasFrame:uint ):Point;
 	}
 }

@@ -124,7 +124,7 @@ package com.potmo.p2d.renderer
 			_transformVector[ 0 ] = redMultiplyer;
 			_transformVector[ 1 ] = greenMultiplyer;
 			_transformVector[ 2 ] = blueMultiplyer;
-			_transformVector[ 3 ] = greenMultiplyer;
+			_transformVector[ 3 ] = alphaMultiplyer;
 
 			_context.setProgramConstantsFromVector( Context3DProgramType.VERTEX, 0, _transformVector, 1 ); // this is the colortransform but we dont care about it now
 			_context.setProgramConstantsFromVector( Context3DProgramType.VERTEX, 1, _matrixVector, 3 );

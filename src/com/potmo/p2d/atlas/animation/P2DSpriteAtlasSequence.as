@@ -16,7 +16,8 @@ package com.potmo.p2d.atlas.animation
 		private var _labels:Vector.<String>;
 		private var _atlasFrames:Vector.<uint>;
 		private var _sequenceOffsetInAtlas:uint;
-		private var _frameSize:Vector.<Point>;
+		private var _frameSizes:Vector.<Point>;
+		private var _regPoints:Vector.<Point>;
 
 
 		public function P2DSpriteAtlasSequence( name:String )
@@ -24,7 +25,8 @@ package com.potmo.p2d.atlas.animation
 			_name = name;
 			_labels = new Vector.<String>();
 			_atlasFrames = new Vector.<uint>();
-			_frameSize = new Vector.<Point>();
+			_frameSizes = new Vector.<Point>();
+			_regPoints = new Vector.<Point>();
 			_sequenceFrameCount = 0;
 		}
 
@@ -91,18 +93,21 @@ package com.potmo.p2d.atlas.animation
 		}
 
 
-		public function addFrame( sequenceFrame:int, atlasFrame:uint, label:String, frameSize:Point ):void
+		public function addFrame( sequenceFrame:int, atlasFrame:uint, label:String, frameSize:Point, regPoint:Point ):void
 		{
 			while ( sequenceFrame >= _sequenceFrameCount )
 			{
 				_labels.push( null );
 				_atlasFrames.push( -1 );
+				_frameSizes.push( null );
+				_regPoints.push( null );
 				_sequenceFrameCount++;
 			}
 
 			_labels[ sequenceFrame ] = label;
 			_atlasFrames[ sequenceFrame ] = atlasFrame;
-			_frameSize[ sequenceFrame ] = frameSize;
+			_frameSizes[ sequenceFrame ] = frameSize;
+			_regPoints[ sequenceFrame ] = regPoint;
 
 		}
 
@@ -164,7 +169,14 @@ package com.potmo.p2d.atlas.animation
 		public function getSizeOfFrame( atlasFrame:uint ):Point
 		{
 			var sequenceFrame:int = getSequenceFrameFromAtlasFrame( atlasFrame );
-			return _frameSize[ sequenceFrame ];
+			return _frameSizes[ sequenceFrame ];
+		}
+
+
+		public function getRegpointOfFrame( atlasFrame:uint ):Point
+		{
+			var sequenceFrame:int = getSequenceFrameFromAtlasFrame( atlasFrame );
+			return _regPoints[ sequenceFrame ];
 		}
 
 	}

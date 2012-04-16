@@ -320,6 +320,12 @@ package com.potmo.p2d.atlas
 		}
 
 
+		public function getRegpoints():Vector.<Point>
+		{
+			return _regpoints.concat(); //clone
+		}
+
+
 		public function getVertexBuffer():VertexBuffer3D
 		{
 			return _vertexBuffer;
