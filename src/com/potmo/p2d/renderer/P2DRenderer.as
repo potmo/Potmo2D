@@ -99,6 +99,9 @@ package com.potmo.p2d.renderer
 
 		public function draw( frame:uint, x:Number, y:Number, rotation:Number, scaleX:Number, scaleY:Number, alphaMultiplyer:Number, redMultiplyer:Number, greenMultiplyer:Number, blueMultiplyer:Number ):void
 		{
+			//TODO: Do frustum culling here. Should not draw stuff outside the screen
+			//TODO: Do not draw stuff with 0 alpha
+
 			_matrix.createBox( scaleX, scaleY, rotation, ( x - _camera.getCameraX() ) * 2 - _backBufferWidth, _backBufferHeight - ( y + _camera.getCameraY() ) * 2 );
 
 			// TODO: this should be in shader instead. Also camera translation
