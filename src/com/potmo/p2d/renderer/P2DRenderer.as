@@ -100,9 +100,20 @@ package com.potmo.p2d.renderer
 		public function draw( frame:uint, x:Number, y:Number, rotation:Number, scaleX:Number, scaleY:Number, alphaMultiplyer:Number, redMultiplyer:Number, greenMultiplyer:Number, blueMultiplyer:Number ):void
 		{
 			//TODO: Do frustum culling here. Should not draw stuff outside the screen
-			//TODO: Do not draw stuff with 0 alpha
+			//TODO: Do not draw stuff that is fully outside the screen (hard since the size is stored in vertex list)
+
+			// do not draw invisible items
+			if ( alphaMultiplyer <= 0 )
+			{
+				return;
+			}
 
 			_matrix.createBox( scaleX, scaleY, rotation, ( x - _camera.getCameraX() ) * 2 - _backBufferWidth, _backBufferHeight - ( y + _camera.getCameraY() ) * 2 );
+
+			/* We can use this as well (http://active.tutsplus.com/tutorials/games/build-a-stage3d-shoot-em-up-sprite-test/)
+			   _matrix = new Matrix3D();
+			   _matrix.appendTranslation(-_backBufferWidth/2, -_backBufferHeight/2, 0);
+			   _matrix.appendScale(2.0/_backBufferWidth, -2.0/_backBufferHeight, 1);*/
 
 			// TODO: this should be in shader instead. Also camera translation
 			_matrix.scale( _backBufferWidthInv, _backBufferHeightInv );
@@ -112,8 +123,6 @@ package com.potmo.p2d.renderer
 			//TODO: Append to one matrix vector for later execution (This should be pushed to ProgramConstants and then pulled in vertext shader)
 			// same for the fragmen shader
 			// we must also upload a new vertex buffer containing the ids that point to the constants for each vertex
-
-			//TODO: Do not draw stuff that is fully outside the screen
 
 			//this matrix vector has a length of 12 
 			_matrixVector[ 0 ] = _matrix.a;
